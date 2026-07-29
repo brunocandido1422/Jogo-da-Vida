@@ -175,9 +175,51 @@ EVENTOS_FIXOS = {
     35: {"titulo": "Dores da idade", "cenario": "Despesas com fisioterapia e itens ortopédicos.", "saldo": -2000.00}
 }
 
+
+# ==========================================
+# 🛡️ PROXY DE SESSÃO (Isolamento por Usuário)
+# ==========================================
+class SessionStateProxy:
+    def _get_dict(self):
+        if 'estado_jogo' not in app.storage.user or not isinstance(app.storage.user['estado_jogo'], dict):
+            app.storage.user['estado_jogo'] = {
+                "equipes_nomes": [], "ordem_final": [], "modo_turbo": False,
+                "tela_atual": "menu", "equipes": [], "turno_atual": 0,
+                "aguardando": False, "passos_atuais": 0, "fila_eventos": [],
+                "formados": [], "jogo_finalizado": False, "ranking": [], "ranking_view_idx": 0
+            }
+        return app.storage.user['estado_jogo']
+
+    def __getitem__(self, key):
+        return self._get_dict()[key]
+
+    def __setitem__(self, key, value):
+        self._get_dict()[key] = value
+
+    def get(self, key, default=None):
+        return self._get_dict().get(key, default)
+
+    def update(self, mapping):
+        self._get_dict().update(mapping)
+
+    def __contains__(self, key):
+        return key in self._get_dict()
+
+
+estado_jogo = SessionStateProxy()
+ui_refs = {}
+
+# ==========================================
+# 🧮 FUNÇÕES AUXILIARES MATEMÁTICAS E LÓGICAS
+# ==========================================
+def fmt_saldo(v):
+    sinal = "-" if v < 0 else ""
+    return f"{sinal}R$ {int(abs(v)):,}".replace(",", ".") + ",00"
+
 @ui.page('/')
 def main():
-    # TUDO ISTO AQUI DENTRO É EXCLUSIVO PARA CADA PESSOA QUE ENTRAR NO LINK:
+    # O ESTADO DO JOGO AGORA FICA DENTRO DA PÁGINA!
+    # Cada vez que alguém abre o link, o Python cria um dicionário novo e exclusivo para ela:
     estado_jogo = {
         "equipes_nomes": [],
         "ordem_final": [],
@@ -189,22 +231,10 @@ def main():
         "passos_atuais": 0,
         "fila_eventos": [],
         "formados": [],
-        "jogo_finalizado": False,
+        "jogo_finalizado": [],
         "ranking": [],
         "ranking_view_idx": 0
     }
-
-    ui_refs = {}
-
-
-# ==========================================
-# 🧮 FUNÇÕES AUXILIARES MATEMÁTICAS E LÓGICAS
-# ==========================================
-def fmt_saldo(v):
-    sinal = "-" if v < 0 else ""
-    return f"{sinal}R$ {int(abs(v)):,}".replace(",", ".") + ",00"
-
-
 
 def agrupar_emojis(emoji_str):
     if not emoji_str: return ""
@@ -1789,6 +1819,6 @@ ui.run(
     favicon="🎲",
     port=int(os.environ.get('PORT', 8080)),
     host='0.0.0.0',
-    storage_secret='sua_chave_secreta_aqui',
+    storage_secret='agros_segredo_super_secreto_2026',
     dark=False
 )
