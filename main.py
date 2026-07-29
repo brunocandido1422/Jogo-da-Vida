@@ -175,36 +175,9 @@ EVENTOS_FIXOS = {
     35: {"titulo": "Dores da idade", "cenario": "Despesas com fisioterapia e itens ortopédicos.", "saldo": -2000.00}
 }
 
-estado_jogo = {
-    "equipes_nomes": [],
-    "ordem_final": [],
-    "modo_turbo": False,
-    "tela_atual": "menu",
-    "equipes": [],
-    "turno_atual": 0,
-    "aguardando": False,
-    "passos_atuais": 0,
-    "fila_eventos": [],
-    "formados": [],
-    "jogo_finalizado": False,
-    "ranking": [],
-    "ranking_view_idx": 0
-}
-
-ui_refs = {}
-
-
-# ==========================================
-# 🧮 FUNÇÕES AUXILIARES MATEMÁTICAS E LÓGICAS
-# ==========================================
-def fmt_saldo(v):
-    sinal = "-" if v < 0 else ""
-    return f"{sinal}R$ {int(abs(v)):,}".replace(",", ".") + ",00"
-
 @ui.page('/')
 def main():
-    # O ESTADO DO JOGO AGORA FICA DENTRO DA PÁGINA!
-    # Cada vez que alguém abre o link, o Python cria um dicionário novo e exclusivo para ela:
+    # TUDO ISTO AQUI DENTRO É EXCLUSIVO PARA CADA PESSOA QUE ENTRAR NO LINK:
     estado_jogo = {
         "equipes_nomes": [],
         "ordem_final": [],
@@ -216,10 +189,22 @@ def main():
         "passos_atuais": 0,
         "fila_eventos": [],
         "formados": [],
-        "jogo_finalizado": [],
+        "jogo_finalizado": False,
         "ranking": [],
         "ranking_view_idx": 0
     }
+
+    ui_refs = {}
+
+
+# ==========================================
+# 🧮 FUNÇÕES AUXILIARES MATEMÁTICAS E LÓGICAS
+# ==========================================
+def fmt_saldo(v):
+    sinal = "-" if v < 0 else ""
+    return f"{sinal}R$ {int(abs(v)):,}".replace(",", ".") + ",00"
+
+
 
 def agrupar_emojis(emoji_str):
     if not emoji_str: return ""
