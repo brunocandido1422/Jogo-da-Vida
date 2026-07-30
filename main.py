@@ -484,7 +484,7 @@ def calcular_ranking_final():
 
 def mudar_view_ranking(novo_idx):
     estado_jogo["ranking_view_idx"] = novo_idx
-    estado_jogo["instancia_telas"].refresh()
+    atualizar_tela_mestre()
 
 
 def reiniciar_jogo_completo():
@@ -494,7 +494,7 @@ def reiniciar_jogo_completo():
         "aguardando": False, "passos_atuais": 0, "fila_eventos": [],
         "formados": [], "jogo_finalizado": False, "ranking": []
     })
-    estado_jogo["instancia_telas"].refresh()
+    atualizar_tela_mestre()
 
 
 # ==========================================
@@ -547,8 +547,8 @@ def aplicar_movimento(passos):
                                                                       "cenario": "Nada de novo no front. Siga em frente!",
                                                                       "opcoes": [{"texto": "Avançar", "saldo": 0}]}})
 
-    estado_jogo["instancia_tabuleiro"].refresh()
-    estado_jogo["instancia_painel"].refresh()
+    atualizar_tabuleiro()
+    atualizar_painel()
     processar_proximo_evento()
 
 
@@ -568,7 +568,7 @@ def exibir_proxima_equipe():
             def liberar_jogo():
                 dialog_proxima.close()
                 # O timer(0.2) garante que o NiceGUI não trave fechando e abrindo modais ao mesmo tempo
-                ui.timer(0.2, lambda: (estado_jogo["instancia_tabuleiro"].refresh(), estado_jogo["instancia_painel"].refresh()), once=True)
+                ui.timer(0.2, lambda: (atualizar_tabuleiro(), atualizar_painel()), once=True)
 
             ui.button("Vamos lá!", on_click=liberar_jogo).classes(
                 'text-white font-black py-2 px-8 rounded-lg mt-4 cursor-pointer w-full').style(
@@ -582,7 +582,7 @@ def avancar_turno():
 
         estado_jogo["aguardando"] = False
         estado_jogo["jogo_finalizado"] = True
-        estado_jogo["instancia_painel"].refresh()
+        atualizar_painel()
 
         ui.notify("🏁 FIM DE JOGO! Calculando os Resultados...", type='positive', position='center', timeout=3000)
 
@@ -592,7 +592,7 @@ def avancar_turno():
         estado_jogo["tela_atual"] = "ranking"
 
         # Timer generoso para o último modal sumir da tela antes de mudar pro Ranking
-        ui.timer(2.0, estado_jogo["instancia_telas"].refresh, once=True)
+        ui.timer(2.0, atualizar_tela_mestre, once=True)
         return
 
     n = len(estado_jogo["equipes"])
@@ -735,7 +735,7 @@ def abrir_enquete(dados):
                         # O Respiro Mágico de 0.2s salva o jogo de congelar!
                         ui.button("Avançar →", on_click=lambda: (
                             dialog_enquete.close(),
-                            ui.timer(0.2, lambda: (estado_jogo["instancia_painel"].refresh(), processar_proximo_evento()), once=True)
+                            ui.timer(0.2, lambda: (atualizar_painel(), processar_proximo_evento()), once=True)
                         )).classes('w-full text-white font-black py-2 rounded-xl mt-4 cursor-pointer').style(
                             'background-color: #333 !important;').props('unelevated')
 
@@ -1156,7 +1156,7 @@ def renderizar_menu():
                 sorteado = sorted([(n, random.randint(1, 6)) for n in nomes], key=lambda x: -x[1])
                 estado_jogo["ordem_final"] = [s[0] for s in sorteado]
                 estado_jogo["tela_atual"] = "sorteio"
-                estado_jogo["instancia_telas"].refresh()
+                atualizar_tela_mestre()
 
             btn_sortear = ui.button("🎲 Sortear Ordem do Jogo", on_click=sortear_ordem).classes(
                 'w-full text-white font-black text-lg py-4 rounded-2xl mt-4 cursor-pointer').style(
@@ -1217,7 +1217,7 @@ def renderizar_sorteio():
             with ui.row().classes('w-full justify-center gap-3'):
                 def set_modo(turbo):
                     estado_jogo["modo_turbo"] = turbo
-                    estado_jogo["instancia_telas"].refresh()
+                    atualizar_tela_mestre()
 
                 turbo_ativo = estado_jogo["modo_turbo"]
                 cor_c_bg = '#1976D2' if not turbo_ativo else '#EEEEEE'
@@ -1246,7 +1246,7 @@ def renderizar_sorteio():
                 estado_jogo["aguardando"] = False
 
                 estado_jogo["tela_atual"] = "regras"
-                estado_jogo["instancia_telas"].refresh()
+                atualizar_tela_mestre()
 
             ui.button("🚀 VER REGRAS DO JOGO!", on_click=iniciar_jogo_real).classes(
                 'w-full text-white font-black text-[16px] py-4 rounded-2xl mt-4 cursor-pointer').style(
@@ -1304,14 +1304,14 @@ def renderizar_regras():
 
             def iniciar_tabuleiro():
                 estado_jogo["tela_atual"] = "jogo"
-                estado_jogo["instancia_telas"].refresh()
+                atualizar_tela_mestre()
 
             ui.button("Entendi, vamos para o Tabuleiro! 🚀", on_click=iniciar_tabuleiro).classes(
                 'text-white font-black text-[18px] py-4 px-8 rounded-xl mt-6 self-center cursor-pointer').style(
                 'background-color: #43A047 !important;').props('unelevated')
 
 
-@ui.refreshable
+
 def ui_tabuleiro():
     with ui.element('div').classes('flex-grow relative bg-[#ECEFF1] overflow-hidden h-full z-0'):
         ui.html(gerar_svg_caminho()).classes('absolute top-0 left-0 w-full h-full pointer-events-none z-0')
@@ -1350,7 +1350,7 @@ def ui_tabuleiro():
                         f'background-color: {cor_eq};')
 
         # A FUNÇÃO ACABA AQUI! Nenhuma ui.image ou logo deve existir abaixo desta linha nesta função.
-@ui.refreshable
+
 def ui_painel_lateral():
     with ui.column().classes(
             'w-[280px] min-w-[280px] h-full bg-[#FAFAFA] border-l-2 border-[#E0E0E0] flex flex-col flex-shrink-0 m-0 p-0'):
@@ -1434,7 +1434,7 @@ def confirmar_reinicio():
                 # (Se você tiver uma variável global para diálogos, pode fechar aqui, senão o estado 'menu' já resolve)
 
                 # 3. Força o redesenho global das telas para cair na tela "menu"
-                estado_jogo["instancia_telas"].refresh()
+                atualizar_tela_mestre()
 
             ui.button("Sim", on_click=sim_reiniciar).classes(
                 'flex-1 bg-[#D32F2F] text-white font-bold py-3 rounded-xl cursor-pointer hover:bg-red-700 transition-colors').props(
@@ -1489,8 +1489,10 @@ def renderizar_jogo():
 
         with ui.row().classes('w-full flex-grow flex-nowrap p-0 m-0 overflow-hidden relative').style(
                 'height: calc(100vh - 50px);'):
-            # Guarda a instância única do tabuleiro desta aba
-            estado_jogo["instancia_tabuleiro"] = ui_tabuleiro()
+            # 1. Envolvemos o tabuleiro no container isolado dele
+            ui_refs['container_tabuleiro'] = ui.element('div').classes('flex-grow h-full w-full relative p-0 m-0')
+            with ui_refs['container_tabuleiro']:
+                ui_tabuleiro()
 
             ui.image('/assets/Marisela_binoculo.png').classes(
                 'absolute left-0 bottom-0 h-[26vh] max-w-[220px] z-40 cursor-pointer hover:scale-105 transition-transform duration-300').props(
@@ -1503,7 +1505,10 @@ def renderizar_jogo():
                 ui.image('/assets/logo_abrapp.png').classes('h-8 w-24').props('fit="contain"')
                 ui.image('/assets/logo_UniAbrapp.png').classes('h-10 w-10').props('fit="contain"')
 
-            ui_painel_lateral()
+            # 2. Envolvemos o painel no container isolado dele
+            ui_refs['container_painel'] = ui.column().classes('w-[280px] min-w-[280px] h-full m-0 p-0 flex-shrink-0')
+            with ui_refs['container_painel']:
+                ui_painel_lateral()
 
 
 # ==========================================
@@ -1581,12 +1586,12 @@ def calcular_ranking_final():
 
 def mudar_view_ranking(novo_idx):
     estado_jogo["ranking_view_idx"] = novo_idx
-    estado_jogo["instancia_telas"].refresh()
+    atualizar_tela_mestre()
 
 
 def ir_para_classificacao_geral():
     estado_jogo["tela_atual"] = "resumo"
-    estado_jogo["instancia_telas"].refresh()
+    atualizar_tela_mestre()
 
 
 def renderizar_ranking():
@@ -1761,7 +1766,7 @@ def renderizar_resumo():
             with ui.row().classes('w-full mt-8 gap-4 flex-nowrap'):
                 def voltar_para_ranking():
                     estado_jogo["tela_atual"] = "ranking"
-                    estado_jogo["instancia_telas"].refresh()
+                    atualizar_tela_mestre()
 
                 ui.button("⬅️ Voltar aos Gráficos", on_click=voltar_para_ranking).classes(
                     'flex-1 bg-[#E0E0E0] text-[#424242] font-black py-4 rounded-xl cursor-pointer hover:bg-[#D6D6D6] transition-colors shadow-sm').props(
@@ -1771,11 +1776,31 @@ def renderizar_resumo():
                     'flex-1 bg-[#1A237E] text-white font-black py-4 rounded-xl cursor-pointer hover:bg-[#283593] transition-colors shadow-md').props(
                     'unelevated')
 
+def atualizar_tela_mestre():
+    if 'container_mestre' in ui_refs:
+        # Salva o container ANTES de apagar os itens (isso salva a referência)
+        container = ui_refs['container_mestre']
+        container.clear()
+        with container:
+            renderizar_telas()
+
+def atualizar_tabuleiro():
+    if 'container_tabuleiro' in ui_refs:
+        container = ui_refs['container_tabuleiro']
+        container.clear()
+        with container:
+            ui_tabuleiro()
+
+def atualizar_painel():
+    if 'container_painel' in ui_refs:
+        container = ui_refs['container_painel']
+        container.clear()
+        with container:
+            ui_painel_lateral()
 
 # ==========================================
 # 🔄 MOTOR DE RENDERIZAÇÃO SPA E ROTAS
 # ==========================================
-@ui.refreshable
 def renderizar_telas():
     tela = estado_jogo["tela_atual"]
     if tela == "menu":
@@ -1800,7 +1825,11 @@ def index():
             .nicegui-content { padding: 0 !important; margin: 0 !important; max-width: 100% !important; height: 100vh !important; display: flex; flex-direction: column; }
         </style>
     ''')
-    estado_jogo["instancia_telas"] = renderizar_telas()
+
+    # Criamos o container mestre atrelado estritamente à aba deste usuário
+    ui_refs['container_mestre'] = ui.element('div').classes('w-full h-full p-0 m-0')
+    with ui_refs['container_mestre']:
+        renderizar_telas()
 
 
 ui.run(
