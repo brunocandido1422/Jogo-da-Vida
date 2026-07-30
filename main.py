@@ -484,7 +484,7 @@ def calcular_ranking_final():
 
 def mudar_view_ranking(novo_idx):
     estado_jogo["ranking_view_idx"] = novo_idx
-    renderizar_ranking.refresh()
+    estado_jogo["instancia_telas"].refresh()
 
 
 def reiniciar_jogo_completo():
@@ -494,7 +494,7 @@ def reiniciar_jogo_completo():
         "aguardando": False, "passos_atuais": 0, "fila_eventos": [],
         "formados": [], "jogo_finalizado": False, "ranking": []
     })
-    renderizar_telas.refresh()
+    estado_jogo["instancia_telas"].refresh()
 
 
 # ==========================================
@@ -547,8 +547,8 @@ def aplicar_movimento(passos):
                                                                       "cenario": "Nada de novo no front. Siga em frente!",
                                                                       "opcoes": [{"texto": "Avançar", "saldo": 0}]}})
 
-    ui_tabuleiro.refresh()
-    ui_painel_lateral.refresh()
+    estado_jogo["instancia_tabuleiro"].refresh()
+    estado_jogo["instancia_painel"].refresh()
     processar_proximo_evento()
 
 
@@ -568,7 +568,7 @@ def exibir_proxima_equipe():
             def liberar_jogo():
                 dialog_proxima.close()
                 # O timer(0.2) garante que o NiceGUI não trave fechando e abrindo modais ao mesmo tempo
-                ui.timer(0.2, lambda: (ui_tabuleiro.refresh(), ui_painel_lateral.refresh()), once=True)
+                ui.timer(0.2, lambda: (estado_jogo["instancia_tabuleiro"].refresh(), estado_jogo["instancia_painel"].refresh()), once=True)
 
             ui.button("Vamos lá!", on_click=liberar_jogo).classes(
                 'text-white font-black py-2 px-8 rounded-lg mt-4 cursor-pointer w-full').style(
@@ -582,7 +582,7 @@ def avancar_turno():
 
         estado_jogo["aguardando"] = False
         estado_jogo["jogo_finalizado"] = True
-        ui_painel_lateral.refresh()
+        estado_jogo["instancia_painel"].refresh()
 
         ui.notify("🏁 FIM DE JOGO! Calculando os Resultados...", type='positive', position='center', timeout=3000)
 
@@ -592,7 +592,7 @@ def avancar_turno():
         estado_jogo["tela_atual"] = "ranking"
 
         # Timer generoso para o último modal sumir da tela antes de mudar pro Ranking
-        ui.timer(2.0, renderizar_telas.refresh, once=True)
+        ui.timer(2.0, estado_jogo["instancia_telas"].refresh, once=True)
         return
 
     n = len(estado_jogo["equipes"])
@@ -735,7 +735,7 @@ def abrir_enquete(dados):
                         # O Respiro Mágico de 0.2s salva o jogo de congelar!
                         ui.button("Avançar →", on_click=lambda: (
                             dialog_enquete.close(),
-                            ui.timer(0.2, lambda: (ui_painel_lateral.refresh(), processar_proximo_evento()), once=True)
+                            ui.timer(0.2, lambda: (estado_jogo["instancia_painel"].refresh(), processar_proximo_evento()), once=True)
                         )).classes('w-full text-white font-black py-2 rounded-xl mt-4 cursor-pointer').style(
                             'background-color: #333 !important;').props('unelevated')
 
@@ -1156,7 +1156,7 @@ def renderizar_menu():
                 sorteado = sorted([(n, random.randint(1, 6)) for n in nomes], key=lambda x: -x[1])
                 estado_jogo["ordem_final"] = [s[0] for s in sorteado]
                 estado_jogo["tela_atual"] = "sorteio"
-                renderizar_telas.refresh()
+                estado_jogo["instancia_telas"].refresh()
 
             btn_sortear = ui.button("🎲 Sortear Ordem do Jogo", on_click=sortear_ordem).classes(
                 'w-full text-white font-black text-lg py-4 rounded-2xl mt-4 cursor-pointer').style(
@@ -1217,7 +1217,7 @@ def renderizar_sorteio():
             with ui.row().classes('w-full justify-center gap-3'):
                 def set_modo(turbo):
                     estado_jogo["modo_turbo"] = turbo
-                    renderizar_telas.refresh()
+                    estado_jogo["instancia_telas"].refresh()
 
                 turbo_ativo = estado_jogo["modo_turbo"]
                 cor_c_bg = '#1976D2' if not turbo_ativo else '#EEEEEE'
@@ -1246,7 +1246,7 @@ def renderizar_sorteio():
                 estado_jogo["aguardando"] = False
 
                 estado_jogo["tela_atual"] = "regras"
-                renderizar_telas.refresh()
+                estado_jogo["instancia_telas"].refresh()
 
             ui.button("🚀 VER REGRAS DO JOGO!", on_click=iniciar_jogo_real).classes(
                 'w-full text-white font-black text-[16px] py-4 rounded-2xl mt-4 cursor-pointer').style(
@@ -1304,7 +1304,7 @@ def renderizar_regras():
 
             def iniciar_tabuleiro():
                 estado_jogo["tela_atual"] = "jogo"
-                renderizar_telas.refresh()
+                estado_jogo["instancia_telas"].refresh()
 
             ui.button("Entendi, vamos para o Tabuleiro! 🚀", on_click=iniciar_tabuleiro).classes(
                 'text-white font-black text-[18px] py-4 px-8 rounded-xl mt-6 self-center cursor-pointer').style(
@@ -1434,7 +1434,7 @@ def confirmar_reinicio():
                 # (Se você tiver uma variável global para diálogos, pode fechar aqui, senão o estado 'menu' já resolve)
 
                 # 3. Força o redesenho global das telas para cair na tela "menu"
-                renderizar_telas.refresh()
+                estado_jogo["instancia_telas"].refresh()
 
             ui.button("Sim", on_click=sim_reiniciar).classes(
                 'flex-1 bg-[#D32F2F] text-white font-bold py-3 rounded-xl cursor-pointer hover:bg-red-700 transition-colors').props(
@@ -1489,7 +1489,8 @@ def renderizar_jogo():
 
         with ui.row().classes('w-full flex-grow flex-nowrap p-0 m-0 overflow-hidden relative').style(
                 'height: calc(100vh - 50px);'):
-            ui_tabuleiro()
+            # Guarda a instância única do tabuleiro desta aba
+            estado_jogo["instancia_tabuleiro"] = ui_tabuleiro()
 
             ui.image('/assets/Marisela_binoculo.png').classes(
                 'absolute left-0 bottom-0 h-[26vh] max-w-[220px] z-40 cursor-pointer hover:scale-105 transition-transform duration-300').props(
@@ -1580,15 +1581,14 @@ def calcular_ranking_final():
 
 def mudar_view_ranking(novo_idx):
     estado_jogo["ranking_view_idx"] = novo_idx
-    renderizar_telas.refresh()
+    estado_jogo["instancia_telas"].refresh()
 
 
 def ir_para_classificacao_geral():
     estado_jogo["tela_atual"] = "resumo"
-    renderizar_telas.refresh()
+    estado_jogo["instancia_telas"].refresh()
 
 
-@ui.refreshable
 def renderizar_ranking():
     ranking = estado_jogo["ranking"]
     idx = estado_jogo.get("ranking_view_idx", len(ranking) - 1)
@@ -1729,7 +1729,6 @@ def renderizar_ranking():
                             ui.html(hist_html)
 
 
-@ui.refreshable
 def renderizar_resumo():
     with ui.element('div').classes('w-full min-h-screen bg-[#F5F5F5] flex items-center justify-center p-8'):
         # Ajustei o max-w para 700px para acomodar bem os dois botões lado a lado
@@ -1762,7 +1761,7 @@ def renderizar_resumo():
             with ui.row().classes('w-full mt-8 gap-4 flex-nowrap'):
                 def voltar_para_ranking():
                     estado_jogo["tela_atual"] = "ranking"
-                    renderizar_telas.refresh()
+                    estado_jogo["instancia_telas"].refresh()
 
                 ui.button("⬅️ Voltar aos Gráficos", on_click=voltar_para_ranking).classes(
                     'flex-1 bg-[#E0E0E0] text-[#424242] font-black py-4 rounded-xl cursor-pointer hover:bg-[#D6D6D6] transition-colors shadow-sm').props(
@@ -1801,7 +1800,7 @@ def index():
             .nicegui-content { padding: 0 !important; margin: 0 !important; max-width: 100% !important; height: 100vh !important; display: flex; flex-direction: column; }
         </style>
     ''')
-    renderizar_telas()
+    estado_jogo["instancia_telas"] = renderizar_telas()
 
 
 ui.run(
